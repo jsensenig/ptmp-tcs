@@ -5,7 +5,6 @@
 #include "json.hpp"
 
 #include <czmq.h>
-
 #include <vector>
 
 using json = nlohmann::json;
@@ -24,7 +23,7 @@ struct TC{
 };
 
 // #include "pdt/ModuleTrigger.h"
-int ModuleTrigger(std::vector<TC> candidates);
+int ModuleTrigger(std::vector<TC> candidates, uint32_t size_thresh, std::pair <int,int> window_gaps, std::pair <int,int> APA_gaps, double slope_diff, int nAPAs);
 
 /* 
 From David:
@@ -83,9 +82,26 @@ const uint32_t hwtick_per_internal = 25;
 class pdt_td_engine : public ptmp::filter::engine_t {
     std::vector<TC> candidates;
     ptmp::data::TPSet outbound;
-    ptmp::data::data_time_t twindow{150000}; // 3ms at 50MHz ticks
+   // ptmp::data::data_time_t twindow{150000}; // 3ms at 50MHz ticks
 public:
-    pdt_td_engine(const std::string& /*unused for now*/) {
+    pdt_td_engine(const std::string& config) {
+      auto jcfg = json::parse(config);
+
+      int nAPAs = 0;
+      double slope_diff = 0;
+      uint32_t size_thresh = UINT_MAX;
+      std::pair <int,int> APA_gaps = (0,0);
+      std::pair <int,int> window_gaps = (0,0);
+      ptmp::data::data_time_t twindow;
+      if (jcfg["module_adj_thresh"].is_number())      { size_thresh = jcfg["module_adj_thresh"]; }
+      if (jcfg["slope_diff"].is_number())             { slope_diff = jcfg["slope_diff"]; }
+      if (jcfg["module_twindow"].is_number())         { twindow = jcfg["module_twindow"]; }
+      if (jcfg["number_APAs"].is_number())            { nAPAs = jcfg["number_APAs"]; }
+      if (jcfg["window_gap_pair"].first.is_number() &&
+          jcfg["window_gap_pair"].second.is_number()) { window_gaps = jcfg["window_gap_pair"]; }
+      if (jcfg["APA_gap_pair"].first.is_number() &&
+          jcfg["APA_gap_pair"].second.is_number())    { APA_gaps = jcfg["APA_gap_pair"]; }
+
     }
 
     virtual ~pdt_td_engine() {
@@ -94,24 +110,18 @@ public:
 
     void ingest(const ptmp::data::TPSet& fresh) {
         const ptmp::data::TrigPrim* special = nullptr;
-        std::vector<const ptmp::data::TrigPrim*> tocopy;
         for (const auto& tp : fresh.tps()) {
             if (tp.flags() == PDT_SPECIAL_TP) {
                 special = &tp;
-                continue;
+                break;
             }
             if (tp.tspan() == 0) {
                 continue;
             }
-            tocopy.push_back(&tp);
         }
         if (!special) {
             zsys_error("PDUNEAdjacencyMLT_engine: failed to find special TP from %d", fresh.detid());
             return;
-        }
-        for (const auto tp : tocopy) {
-            ptmp::data::TrigPrim* newtp = outbound.add_tps();
-            *newtp = *tp;
         }
 
         if (candidates.empty()) {   // first in batch
@@ -174,13 +184,14 @@ public:
           if (candidates.size() < 2) return;
         }
          
-        // ready to process
-        int trigger = ModuleTrigger(candidates);
+        // ready to process ( *_gaps are pairs (time,channel) )
+        int ModuleTrigger(candidates, size_thresh, window_gaps, APA_gaps, slope_diff, nAPAs);
 
         // Print some messages for ml debugging
         if(trigger) {
           for(auto cand : candidates) {
-            zsys_info("Adj: %ld | APA: %ld  | FT: %ld | FCh: %ld |  LT: %ld |  LCh: %ld", cand.adjacency, cand.apanum, cand.first_time, cand.first_ch, cand.last_time, cand.last_ch);
+            zsys_info("Adj: %ld | APA: %ld  | FT: %ld | FCh: %ld |  LT: %ld |  LCh: %ld", \ 
+                      cand.adjacency, cand.apanum, cand.first_time, cand.first_ch, cand.last_time, cand.last_ch);
           }
        }
 

@@ -93,7 +93,7 @@ int AdjacentSameWindowCountingPrim(std::vector<unsigned int> channels);
 int TimeAdjacentCounting(std::vector<std::vector<unsigned int>> channels, std::vector<std::vector<unsigned int>> adcs);
 */
 
-TC PDUNEAdjacency(std::vector<TP> TPs);
+TC PDUNEAdjacency(std::vector<TP> TPs, int wire_gap);
 
 /*Not presently necessary, more important than above set... WILL NEED TO RENAME
 std::vector<int> PDUNEClustering(std::vector<TP> TPs);

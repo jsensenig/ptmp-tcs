@@ -16,7 +16,7 @@ int adc_thresh = 0;
 int wire_cut = 0;
 int wire_thresh = 0;
 
-TC TriggerCandidate(std::vector<TP> TPs, int adj_thresh, int clustering){
+TC TriggerCandidate(std::vector<TP> TPs, int adj_thresh, int wire_gap, int clustering){
   TC fail = {0,0,0,0,0,0,0,0,0}; //returned if the trigger candidate is not issued. The output from PDUNEAdjacencyWithEverything is returned if the Trigger is issued.
   TC candidate;
 
@@ -28,7 +28,7 @@ TC TriggerCandidate(std::vector<TP> TPs, int adj_thresh, int clustering){
     return fail;
     //candidate = PDUNEClusteringWithEverything(channels, times, adcs, tots);
   }
-  else { candidate = PDUNEAdjacency(TPs); }
+  else { candidate = PDUNEAdjacency(TPs, wire_gap); }
 
   if (candidate.adjacency > adj_thresh){
     //    candidate.push_back(1);

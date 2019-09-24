@@ -30,7 +30,7 @@ struct TC{
 };
 
 // #include "pdt/TriggerCandidate.h"
-TC TriggerCandidate(std::vector<TP>, int adj_thresh, int clustering=0);
+TC TriggerCandidate(std::vector<TP>, int adj_thresh,  int wire_gap, int clustering=0);
 
 using json = nlohmann::json;
 
@@ -73,10 +73,14 @@ class pdt_tc_engine : public ptmp::filter::engine_t {
 public:
     pdt_tc_engine(const std::string& config) {
         auto jcfg = json::parse(config);
-        int detid=0;
-        if (jcfg["detid"].is_number()) {
-            detid = jcfg["detid"];
-        }
+
+        int detid = 0;
+        int adj_thresh = INT_MAX;
+        int wire_gap = -1;
+        if (jcfg["detid"].is_number())               { detid = jcfg["detid"]; }
+        if (jcfg["adjacency_threshold"].is_number()) { adj_thresh = jcfg["adjacency_threshold"]; }
+        if (jcfg["adj_wire_gap"].is_number())        { wire_gap = jcfg["adj_wire_gap"]; }
+
         outbound.set_detid(detid);
         outbound.set_count(0);
         outbound.set_created(0);
@@ -124,7 +128,7 @@ public:
                   [](const TP& a, const TP& b) {
                       return a.channel < b.channel;
                   });
-        TC tc = TriggerCandidate(pdt_tps, 100);
+        TC TriggerCandidate(std::vector<TP>, adj_thresh, wire_gap);
         // this returns an 8-tuple of ints which may be empty.
         //     0         1       2       3      4      5     6    7
         // (adjacency, adcpeak, adcsum, tspan, chan1, chan2, t1, t2)

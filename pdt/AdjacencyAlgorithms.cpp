@@ -354,7 +354,7 @@ Same as PDUNEAdjacencyWithEverything, but handles the TP struct as opposed to th
 
 ///////////////////////
 
-TC PDUNEAdjacency(vector<TP> TPs){
+TC PDUNEAdjacency(vector<TP> TPs, int wire_gap){
   TC tc = {0,0,0,0,0,0,0,0,0};
   int adj = 1; 
   int channel = 0; 
@@ -381,7 +381,7 @@ TC PDUNEAdjacency(vector<TP> TPs){
       next_channel=channel-1;
     }    
     if (next_channel == channel) continue;
-    else if ((next_channel-channel) <= 5){
+    else if ((next_channel-channel) <= wire_gap){
     //else if (next_channel == channel+1){
       adj += (next_channel-channel);
     }    
