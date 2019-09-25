@@ -93,14 +93,14 @@ public:
       std::pair <int,int> APA_gaps = (0,0);
       std::pair <int,int> window_gaps = (0,0);
       ptmp::data::data_time_t twindow;
-      if (jcfg["module_adj_thresh"].is_number())      { size_thresh = jcfg["module_adj_thresh"]; }
-      if (jcfg["slope_diff"].is_number())             { slope_diff = jcfg["slope_diff"]; }
-      if (jcfg["module_twindow"].is_number())         { twindow = jcfg["module_twindow"]; }
-      if (jcfg["number_APAs"].is_number())            { nAPAs = jcfg["number_APAs"]; }
-      if (jcfg["window_gap_pair"].first.is_number() &&
-          jcfg["window_gap_pair"].second.is_number()) { window_gaps = jcfg["window_gap_pair"]; }
-      if (jcfg["APA_gap_pair"].first.is_number() &&
-          jcfg["APA_gap_pair"].second.is_number())    { APA_gaps = jcfg["APA_gap_pair"]; }
+      if (jcfg["module_adj_thresh"].is_number())  { size_thresh = jcfg["module_adj_thresh"]; }
+      if (jcfg["slope_diff"].is_number())         { slope_diff = jcfg["slope_diff"]; }
+      if (jcfg["module_twindow"].is_number())     { twindow = jcfg["module_twindow"]; }
+      if (jcfg["number_APAs"].is_number())        { nAPAs = jcfg["number_APAs"]; }
+      if (jcfg["window_gap_time"].is_number() &&
+          jcfg["window_gap_channel"].is_number()) { window_gaps = (jcfg["window_gap_time"], jcfg["window_gap_channel"]); }
+      if (jcfg["APA_gap_time"].is_number() &&
+          jcfg["APA_gap_channel"].is_number())    { APA_gaps = (jcfg["APA_gap_time"], jcfg["APA_gap_channel"]); }
 
     }
 
@@ -113,7 +113,7 @@ public:
         for (const auto& tp : fresh.tps()) {
             if (tp.flags() == PDT_SPECIAL_TP) {
                 special = &tp;
-                break;
+                break; //If we found the special TP, done!
             }
             if (tp.tspan() == 0) {
                 continue;
